@@ -13,3 +13,6 @@ node_modules/
 *.litertlm
 *.task
 *.gguf
+
+# Notas internas del orador (no se publican)
+notas-orador/

@@ -9,7 +9,6 @@
 
 100% virtuales por Google Meet · 18:00 h · Abiertos y gratuitos para toda la comunidad · Facultad de Ingeniería, UNER
 
-> **Notas:** Portada común a los dos encuentros. Son 100% virtuales por Meet, así que todo es screen-share: el mayor riesgo es TU conexión, no el proyector. Tené clips de backup listos para reproducir.
 
 ---
 
@@ -19,7 +18,6 @@
 
 Qué es Build with Gemma · Conocé Gemma 4 · Reglas del hackathon · Ideas y equipos
 
-> **Notas:** Encuentro 1 = Inmersión. Amplio, motivacional. La agenda es la del flyer, en ese orden. Lo técnico profundo va al Encuentro 2.
 
 ---
 
@@ -34,7 +32,6 @@ Qué es Build with Gemma · Conocé Gemma 4 · Reglas del hackathon · Ideas y e
 
 Es un encuentro de inmersión: amplio a propósito. La parte técnica pesada es el 23 de julio.
 
-> **Notas:** Espeja exactamente los 4 bullets del flyer. Dejá claro que HOY no se programa: hoy se entiende el terreno y se arman equipos.
 
 ---
 
@@ -49,7 +46,6 @@ Es un encuentro de inmersión: amplio a propósito. La parte técnica pesada es 
 
 Voy a ser mentor y jurado del hackathon. Nada de lo que muestro es teórico: lo cobré, lo rompí, o lo tuve que arreglar.
 
-> **Notas:** Remoto: sin lenguaje corporal, la credibilidad hay que establecerla rápido y con datos. 90 segundos máximo.
 
 ---
 
@@ -64,7 +60,6 @@ Voy a ser mentor y jurado del hackathon. Nada de lo que muestro es teórico: lo 
 
 *Fuente: iniciativa Build with Gemma / Gemma 4 Challenge (Google). Verificá las reglas específicas del hackathon UNER en el Kaggle del flyer.*
 
-> **Notas:** El mandato textual del challenge: "build something useful or creative with any Gemma 4 model… Gemma 4 doing real work at the heart of your project". La entrega es en Kaggle (dato del flyer).
 
 ---
 
@@ -83,7 +78,6 @@ En salud, el modelo abierto no es «la opción barata». Es la única arquitectu
 
 **Si el dato tiene que salir a la API de un tercero para que el modelo funcione, el proyecto no existe. No es más caro: es inviable.**
 
-> **Notas:** El alma de las dos charlas. Contar Histora: el orden del pipeline de anonimización existe por la regulación, no por gusto.
 
 ---
 
@@ -103,7 +97,6 @@ Todas: multimodales · 140+ idiomas · thinking mode · rol «system» nativo ·
 
 Hoy solo tienen que llevarse una intuición: **se elige el tamaño según el hardware.** La mecánica fina (PLE, MoE) la vemos el 23.
 
-> **Notas:** Nivel inmersión: mapa alto. NO entres en PLE/MoE en detalle hoy; eso es del Encuentro 2.
 
 ---
 
@@ -118,7 +111,6 @@ Un modelo multimodal clásico traduce imagen y audio con encoders separados ante
 
 El audio crudo se proyecta al mismo espacio dimensional que los tokens de texto. Para bioingenieros con background en señales, esto es un tema de charla en sí mismo.
 
-> **Notas:** El wow de la inmersión. Conecta con procesamiento de señales. Dictado clínico → nota estructurada, sin pipeline de ASR separado, sin que el audio salga de la máquina.
 
 ---
 
@@ -132,7 +124,6 @@ El audio crudo se proyecta al mismo espacio dimensional que los tokens de texto.
 
 Remoto: el modo avión del celular se muestra espejando la pantalla del teléfono en Meet. Truco escénico único — y prueba de que el dato no salió del bolsillo.
 
-> **Notas:** Es virtual: todo por screen-share. Para el celular, espejá la pantalla (scrcpy o AirPlay) hacia la ventana de Meet. Tené el clip de backup grabado por si tu conexión tiembla.
 
 ---
 
@@ -146,7 +137,6 @@ Remoto: el modo avión del celular se muestra espejando la pantalla del teléfon
 
 En el Encuentro 2 lo vamos a ver romperse en vivo, con un caso médico con datos contradictorios.
 
-> **Notas:** En inmersión, plantar la duda. La demo del fallo real va en el Encuentro 2 (hands-on).
 
 ---
 
@@ -165,7 +155,6 @@ Modelos médicos abiertos, ya entrenados en dominio. Sirven como punto de partid
 
 MedGemma se rige por los Health AI Developer Foundations terms, no por Apache. Y sigue siendo base Gemma 3: **fine-tunear Gemma 4 al dominio médico es un hueco abierto = una tesis.**
 
-> **Notas:** Esto es "Ideas" del flyer. Cada bullet es un proyecto. Dejá la slide en el Kaggle del hackathon.
 
 ---
 
@@ -183,7 +172,6 @@ No hace falta que sean cinco personas. Sí hace falta que alguien se haga cargo 
 
 Busquen complementariedad, no cinco personas que sepan lo mismo. **El equipo con un clínico adentro tiene una ventaja injusta.**
 
-> **Notas:** Slide pedida por la agenda del flyer ("formación de equipos"). Enfatizá Datos y Evaluación, que es donde se gana.
 
 ---
 
@@ -200,7 +188,6 @@ Busquen complementariedad, no cinco personas que sepan lo mismo. **El equipo con
 
 Y un piso innegociable: **nada de esto es un dispositivo médico.** El EU AI Act lo clasifica alto riesgo. Anonimicen antes de tocar nada.
 
-> **Notas:** Los criterios explícitos suben el nivel de todos. El guardrail regulatorio va acá, condensado, porque es una REGLA.
 
 ---
 
@@ -217,7 +204,6 @@ El Encuentro 2 es un taller. Van a tipear ustedes. Sin esto listo, no lo van a p
 
 **Nos vemos el 23 · 18:00 h · por Google Meet · Encuentro 2: Hands-on técnico**
 
-> **Notas:** Tarea concreta y accionable. La cuenta de Kaggle es nueva y necesaria porque la entrega es ahí.
 
 ---
 
@@ -227,7 +213,6 @@ El Encuentro 2 es un taller. Van a tipear ustedes. Sin esto listo, no lo van a p
 
 Ollama + Unsloth · Function calling y multimodalidad · Feedback · Entrega
 
-> **Notas:** Encuentro 2 = taller. Laptops abiertas. Acá vive todo lo técnico profundo.
 
 ---
 
@@ -242,7 +227,6 @@ Ollama + Unsloth · Function calling y multimodalidad · Feedback · Entrega
 
 Espeja los cuatro temas anunciados. Si no instalaron nada el 16, siéntense con alguien que sí.
 
-> **Notas:** Cuatro bloques del flyer, en orden.
 
 ---
 
@@ -258,7 +242,6 @@ Activa 4B por token, pero carga los 26B en memoria. Corre casi como un 4B, ocupa
 
 En el taller: `ollama run gemma4:e4b`. **Elegir bien el tamaño es la primera decisión de ingeniería del hackathon.**
 
-> **Notas:** Ahora SÍ el detalle de PLE/MoE, porque es taller y hay que elegir tamaño. Arrancá Ollama en vivo acá.
 
 ---
 
@@ -274,7 +257,6 @@ Un SKILL.md de texto plano. Buscar, consultar, dibujar, llamar otro modelo. Cero
 
 **Adapter en la GPU. Skill en el borde.** Si se llevan un solo concepto del taller, que sea este.
 
-> **Notas:** Ortogonales y combinables. Este es el mapa mental de todo lo que sigue.
 
 ---
 
@@ -291,7 +273,6 @@ No es prompt engineering. El modelo fue entrenado sabiendo cuándo llama una her
 
 **DEMO EN VIVO** · escribimos una SKILL.md de cero → foto de etiqueta de lab → JSON, en el celular
 
-> **Notas:** Demo: la skill lab-label-extractor, escrita en vivo. Multimodalidad + function calling en un solo bloque, como pide el flyer. Ensayala 3 veces.
 
 ---
 
@@ -305,7 +286,6 @@ No es prompt engineering. El modelo fue entrenado sabiendo cuándo llama una her
 
 **Lección general para toda la carrera: cuando algo no anda, chequeen el runtime antes de culpar al modelo.**
 
-> **Notas:** Contenido que no está en ningún blog de intro. El acople enable_thinking/function-calling es el gotcha estrella.
 
 ---
 
@@ -323,7 +303,6 @@ El base nunca se toca. Por eso podés tener muchos adapters sobre un mismo base 
 
 **QLoRA** = base en 4 bits (NF4). ~90% de la calidad de LoRA, en la mitad de la memoria.
 
-> **Notas:** Sembrar "el base nunca se toca" para el multi-LoRA.
 
 ---
 
@@ -349,7 +328,6 @@ El base nunca se toca. Por eso podés tener muchos adapters sobre un mismo base 
 
 **«No tengo GPU» dejó de ser una excusa válida. Ahora la excusa tiene que ser sobre los datos.**
 
-> **Notas:** Fuente autoritativa: docs de Unsloth. Aclararlo.
 
 ---
 
@@ -364,7 +342,6 @@ El base nunca se toca. Por eso podés tener muchos adapters sobre un mismo base 
 
 **Bonus:** si ven un loss de 13-15 en E2B/E4B, es NORMAL. Quirk de los multimodales. No lo arreglen.
 
-> **Notas:** Esta slide sola justifica el taller: cuatro horas de sufrimiento evitadas.
 
 ---
 
@@ -386,7 +363,6 @@ MedGemma 4B sobre MRI cerebral · LoRA · 1 época · dataset chico → **+56 pu
 
 **Regla de hackathon: 80% datos + evaluación, 20% modelo.** El notebook oficial con RL va de 14→70% pero pide A100 40GB y 11 h: no es de fin de semana.
 
-> **Notas:** Dato clave a decir: el split del pipeline oficial es POR PACIENTE, no por imagen. Es el error #1 que voy a buscar.
 
 ---
 
@@ -399,7 +375,6 @@ Lo van a leer en cinco blogs. **No está en ningún benchmark revisado.** Dígan
 **Lo que SÍ es defendible:**
 LoRA Land (310 modelos fine-tuneados): 301 de 310 superaron a su base, y 224 de 310 superaron a GPT-4 en su tarea específica. Un modelo chico especializado le gana a un gigante generalista — **en esa tarea, y solo en esa.**
 
-> **Notas:** Modelar honestidad epistémica. Como jurado, esto es lo que voy a exigir: distinguir lo probado de lo leído.
 
 ---
 
@@ -419,7 +394,6 @@ Adapters (~60 MB cada uno):
 
 Sub-ms de swap por request · ~200 adapters en una A100 con <5% de latencia · en GPU (no en el Gallery: en el borde la especialización es la skill).
 
-> **Notas:** El clímax. "Esto es lo que construyo en Histora, y ustedes lo pueden construir este fin de semana." Cierra el círculo: adapter en GPU, skill en el borde.
 
 ---
 
@@ -437,7 +411,6 @@ Sub-ms de swap por request · ~200 adapters en una A100 con <5% de latencia · e
 
 **Traigan a la sesión de feedback: su baseline, su métrica, y el caso donde su proyecto falla.** Con eso les doy feedback útil en 3 minutos.
 
-> **Notas:** Es el anexo B convertido en material. Decíles que preparen esas tres cosas para aprovechar el office-hours.
 
 ---
 
@@ -467,7 +440,6 @@ Sub-ms de swap por request · ~200 adapters en una A100 con <5% de latencia · e
 
 **Licencia — decilo antes de publicar: Gemma 4 es Apache 2.0. MedGemma NO (Health AI Developer Foundations terms).**
 
-> **Notas:** La licencia va acá porque es cuando importa: al publicar/comercializar. El challenge de 100K da destino post-hackathon.
 
 ---
 
@@ -479,4 +451,3 @@ Sub-ms de swap por request · ~200 adapters en una A100 con <5% de latencia · e
 
 Nos vemos en el hackathon · Consultas: ciev.ingenieria@uner.edu.ar
 
-> **Notas:** Cierre. Corto.

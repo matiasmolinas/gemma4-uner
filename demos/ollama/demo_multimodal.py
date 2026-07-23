@@ -1,5 +1,5 @@
 """
-Peldaño 2 de la escalera: la laptop.
+Gemma 4 multimodal en tu laptop, con Ollama.
 
 Gemma 4 12B es encoder-free — imagen y audio entran directo al backbone del LLM.
 Este script muestra las tres modalidades sobre el MISMO modelo, sin pipeline
@@ -8,17 +8,17 @@ de ASR separado, sin encoder de visión separado, sin internet.
 Preparación:
     ollama pull gemma4:12b        # verificá el tag con `ollama list`
     pip install ollama
-    # poné una imagen en assets/radiografia.jpg
-    # poné un audio en  assets/dictado.wav  (15-20 s de dictado clínico)
+    # assets/radiografia.jpg y assets/dictado.wav ya vienen en el repo;
+    # reemplazalos por tu propio material (anonimizado) cuando armes tu proyecto
 
 Uso:
     python demo_multimodal.py texto
     python demo_multimodal.py imagen
     python demo_multimodal.py audio
 
-NOTA HONESTA: el soporte de audio vía Ollama depende de la versión del runtime.
-Si `audio` falla, el fallback es LiteRT-LM CLI (ver README). Probalo ANTES de la
-charla y tené el video de backup.
+NOTA: el soporte de audio depende de la versión del runtime de Ollama
+(verificado jul-2026: aún no funciona — descarta el campo en silencio).
+El camino verificado para audio es LiteRT-LM CLI: ver README.
 """
 
 import sys

@@ -1,63 +1,67 @@
-# Demo de laptop — Ollama
+# Gemma 4 multimodal en tu laptop — Ollama
 
-Peldaño 2 de la escalera (Charla 1, slide 8).
+Tres modalidades (texto, imagen, audio) sobre **el mismo modelo**, corriendo
+100% local. Sin pipeline de ASR separado, sin encoder de visión separado, sin
+internet: Gemma 4 12B es *encoder-free* — imagen y audio entran directo al
+backbone del LLM.
+
+Usalo como base para cualquier proyecto que procese texto clínico, imágenes
+médicas o dictado por voz **sin que el dato salga de la máquina**.
 
 ## Setup
 
 ```bash
-ollama pull gemma4:12b     # verificá el tag con `ollama list`
+ollama pull gemma4:12b     # ~8 GB; verificá el tag exacto con `ollama list`
 pip install ollama
 ```
 
-Poné en `assets/`:
-- `radiografia.jpg` — una imagen médica real (o una etiqueta de laboratorio)
-- `dictado.wav` — 15–20 s de dictado clínico grabado por vos
+En `assets/` ya hay material de ejemplo:
+
+- `radiografia.jpg` — radiografía de tórax PA normal ([Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Normal_posteroanterior_(PA)_chest_radiograph_(X-ray).jpg), licencia libre)
+- `dictado.wav` — dictado clínico **sintético** (TTS), 19 s. Sin datos de pacientes reales.
+
+Reemplazalos por tu propio material cuando armes tu proyecto — y anonimizá antes.
 
 ## Correr
 
 ```bash
-python demo_multimodal.py texto     # baseline, calibra latencia con el proyector
-python demo_multimodal.py imagen    # visión sin encoder
-python demo_multimodal.py audio     # audio nativo, sin ASR separado
+python demo_multimodal.py texto      # baseline de latencia
+python demo_multimodal.py imagen     # visión sin encoder → JSON estructurado
+python demo_multimodal.py audio      # audio nativo (ver ⚠️ abajo)
 ```
 
-## ⚠️ El punto frágil
+Si el 12B se arrastra en tu máquina, bajá a `gemma4:e4b` (editá `MODELO` en el
+script). Un modelo que responde más lento sigue siendo un modelo que funciona.
 
-**El soporte de audio vía Ollama depende de la versión del runtime.** Es la parte
-más probable de romperse en vivo.
+## ⚠️ Audio: la capacidad es del modelo, el soporte es del runtime
 
-**VERIFICADO 23-jul-2026 (Ollama 0.31.2): audio NO funciona.** El campo `audios`
-se descarta en silencio (cliente Python y API REST); el modelo responde "quedo a
-la espera del material". Pasar el wav por `images` cuelga la request. Mostrar el
-fallo en vivo ES la lección: "chequeá el runtime antes de culpar al modelo".
+**Verificado (jul-2026, Ollama 0.31.2): Ollama todavía no soporta entrada de
+audio.** El campo `audios` se descarta *en silencio* — sin error — y el modelo
+responde como si no hubiera audio adjunto. Es el ejemplo perfecto de una lección
+que te va a servir toda la carrera:
 
-Fallback **verificado y funcionando** — LiteRT-LM CLI (instalar con Python 3.12;
-con 3.14 no hay wheel):
+> Cuando algo no anda, chequeá el runtime antes de culpar al modelo.
+
+El modelo SÍ tiene audio nativo. Para usarlo hoy, el camino verificado es
+**LiteRT-LM CLI** (el mismo runtime del AI Edge Gallery):
 
 ```bash
-uv tool install --python 3.12 litert-lm
+uv tool install --python 3.12 litert-lm    # con Python 3.14 aún no hay wheel
+
 litert-lm run \
-  ~/.litert-lm/cache/huggingface/litert-community/gemma-4-E2B-it-litert-lm/gemma-4-E2B-it.litertlm \
+  --from-huggingface-repo=litert-community/gemma-4-E2B-it-litert-lm \
+  gemma-4-E2B-it.litertlm \
   --prompt="Escuchá este dictado clínico y devolvé JSON con: transcripcion_literal, motivo_consulta, hallazgos (array), plan (array), terminos_dudosos (array). No inventes nada que no se haya dicho." \
   --attachment assets/dictado.wav
 ```
 
-(El modelo ya está descargado en ese path. `--attachment` también acepta imágenes.)
+`--attachment` también acepta imágenes — te sirve como segundo camino de visión.
 
-Bonus pedagógico verificado: transcribió "hipoventilación en base pulmonar derecha"
-como "pavimentación en pulmonar derecha" y NO lo marcó en `terminos_dudosos` —
-ejemplo perfecto, en vivo, de por qué la regla "null explícito > valor inventado"
-importa.
+### Un detalle que vale la pena estudiar
 
-Y si eso también falla: **el video de backup**. Grabalo.
-
-## Guion de la demo
-
-1. `texto` — "esto es el baseline; miren la latencia con el proyector conectado".
-2. `imagen` — arrastrás la imagen. JSON estructurado. "Sin encoder de visión."
-3. `audio` — pasás el `.wav`. "Un solo modelo. Sin pipeline de ASR. El audio del
-   paciente no salió de esta máquina."
-
-Si el 12B se arrastra con el proyector conectado, **bajá a `e4b` y decilo en voz alta**:
-*"miren, con el proyector el 12B se arrastra — esto también es información útil."*
-Convertís un problema en contenido.
+En nuestra prueba, el modelo transcribió *"hipoventilación en base pulmonar
+derecha"* como *"pavimentación en pulmonar derecha"* — **y no lo marcó en
+`terminos_dudosos`**. Un término técnico mal oído, reportado con total
+confianza. Si tu proyecto usa audio clínico, ese es exactamente el tipo de
+fallo que tu evaluación tiene que detectar. El modelo que dice "no entendí
+esta palabra" vale más que el que inventa una parecida.

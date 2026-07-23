@@ -44,12 +44,10 @@
   .slide th { background: #0e2140; color: var(--gold); }
   .slide li { margin: .3em 0; }
   .slide blockquote {
-    display: none; /* notas del orador, toggle con N */
     margin: 1.2em 0 0; padding: 12px 16px; border-left: 4px solid var(--gold);
     background: rgba(255,194,77,.07); border-radius: 0 10px 10px 0;
     color: var(--muted); font-size: .85em;
   }
-  body.show-notes .slide blockquote { display: block; }
   #bar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 20px; border-top: 1px solid var(--line);
@@ -75,11 +73,10 @@
 <div id="stage"><div class="slide">Cargando presentación…</div></div>
 <div id="bar">
   <span id="counter">–</span>
-  <span class="hint">← → navegar · N notas del orador · <a href="presentacion.md" style="color:var(--accent)">markdown</a></span>
+  <span class="hint">← → navegar · <a href="presentacion.md" style="color:var(--accent)">markdown</a> · <a href="https://github.com/matiasmolinas/gemma4-uner" style="color:var(--accent)">repo</a></span>
   <span>
     <button id="prev">←</button>
     <button id="next">→</button>
-    <button id="notes">Notas</button>
   </span>
 </div>
 
@@ -116,11 +113,9 @@ function go(d) { idx = Math.min(slides.length - 1, Math.max(0, idx + d)); render
 
 document.getElementById("prev").onclick = () => go(-1);
 document.getElementById("next").onclick = () => go(1);
-document.getElementById("notes").onclick = () => document.body.classList.toggle("show-notes");
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") go(1);
   else if (e.key === "ArrowLeft" || e.key === "PageUp") go(-1);
-  else if (e.key.toLowerCase() === "n") document.body.classList.toggle("show-notes");
 });
 init();
 </script>

@@ -27,7 +27,7 @@ from datetime import date, datetime
 import ollama
 
 # ---------------------------------------------------------------------------
-# NOTA DE VERSIÓN (leer antes de la charla)
+# NOTA DE VERSIÓN (leer antes de correr)
 # ---------------------------------------------------------------------------
 # El tag exacto del modelo cambió entre releases. Verificá con:
 #     ollama list
