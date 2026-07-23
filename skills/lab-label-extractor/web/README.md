@@ -45,21 +45,23 @@ primer token 1.3 s, JSON completo en ~5 s.
 **Para el flujo con FOTO** (Gemma 4 con visión, on-device) tenés dos caminos:
 
 - **AI Edge Gallery** en el celular (el camino principal de la skill), o
-- **LiteRT-LM CLI** en la compu:
+- **LiteRT-LM CLI** en la compu — comando verificado (~10 s con el modelo cacheado):
 
 ```bash
-uv tool install --python 3.12 litert-lm
+uv tool install --python 3.12 litert-lm   # una sola vez
+
 litert-lm run \
   --from-huggingface-repo=litert-community/gemma-4-E2B-it-litert-lm \
   gemma-4-E2B-it.litertlm \
-  --prompt="<el prompt de la skill>" \
+  --prompt="Extraé los datos de esta etiqueta de laboratorio y devolvé únicamente JSON con: producto, fabricante, numero_catalogo, lote, cantidad, fecha_vencimiento (YYYY-MM-DD), pictogramas_ghs, cas, confianza, campos_ilegibles" \
   --attachment etiqueta_prueba.jpg
 ```
 
-En nuestra prueba extrajo la etiqueta correctamente, incluida la regla de
-fechas (11/2027 → `2027-11-30`)… y falló en un pictograma (vio `inflamable`
-pero no `irritante`). Ese tipo de fallo parcial es exactamente lo que tu
-evaluación tiene que medir.
+En nuestras pruebas extrajo la etiqueta correctamente, con un matiz que importa:
+con este prompt corto la fecha "11/2027" sale `2027-11-01`; con el contenido
+completo de la SKILL.md como prompt sale `2027-11-30` (la regla del último día
+del mes). El detalle completo está en el [README de la skill](../README.md) —
+las reglas de la skill son el contrato, no decoración.
 
 ## Notas técnicas
 
