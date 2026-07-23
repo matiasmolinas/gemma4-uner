@@ -59,9 +59,11 @@ litert-lm run \
 
 ### Un detalle que vale la pena estudiar
 
-En nuestra prueba, el modelo transcribió *"hipoventilación en base pulmonar
-derecha"* como *"pavimentación en pulmonar derecha"* — **y no lo marcó en
-`terminos_dudosos`**. Un término técnico mal oído, reportado con total
-confianza. Si tu proyecto usa audio clínico, ese es exactamente el tipo de
-fallo que tu evaluación tiene que detectar. El modelo que dice "no entendí
-esta palabra" vale más que el que inventa una parecida.
+En nuestras pruebas, el modelo transcribió *"hipoventilación en base pulmonar
+derecha"* como *"pavimentación en pulmonar derecha"* en una corrida y como
+*"movilización en pulmonar derecha"* en otra — **y en ninguna lo marcó en
+`terminos_dudosos`**. El término técnico que no entiende lo reemplaza por una
+palabra plausible *distinta cada vez*, con total confianza: no es un error
+fijo, es incertidumbre no reportada. Si tu proyecto usa audio clínico, ese es
+exactamente el tipo de fallo que tu evaluación tiene que detectar. El modelo
+que dice "no entendí esta palabra" vale más que el que inventa una parecida.
