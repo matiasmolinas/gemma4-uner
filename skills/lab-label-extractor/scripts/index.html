@@ -1,0 +1,179 @@
+<!--
+  Vista de la skill lab-label-extractor para Google AI Edge Gallery.
+
+  El Gallery soporta skills de tipo JS: el modelo produce el JSON y esta
+  pagina lo renderiza dentro de la app. Toda la logica corre en el sandbox
+  del WebView del telefono, sin red.
+
+  Contrato: el host inyecta el JSON del modelo en window.SKILL_DATA.
+  Si no existe (por ejemplo, al abrir el archivo en un browser de escritorio
+  para probar), cae en un dato de ejemplo.
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Etiqueta de laboratorio</title>
+<style>
+  :root {
+    --bg: #0e1a1f;
+    --card: #16282e;
+    --line: #2e4249;
+    --text: #f2f7f6;
+    --muted: #9fb3b8;
+    --teal: #02c39a;
+    --amber: #e8a33d;
+    --coral: #d64545;
+    --mono: ui-monospace, "SF Mono", "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px;
+    background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px; line-height: 1.5;
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: .5px;
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+  .badge.alta  { background: rgba(2,195,154,.18);  color: var(--teal);  }
+  .badge.media { background: rgba(232,163,61,.18); color: var(--amber); }
+  .badge.baja  { background: rgba(214,69,69,.18);  color: var(--coral); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px; margin-bottom: 10px;
+  }
+  .producto { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+  .fabricante { color: var(--muted); font-size: 13px; }
+
+  .grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-top: 12px;
+  }
+  .field .k {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--muted); margin-bottom: 2px;
+  }
+  .field .v { font-family: var(--mono); font-size: 14px; }
+  .field .v.null { color: var(--coral); font-style: italic; }
+
+  .ghs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .ghs span {
+    border: 1px solid var(--amber); color: var(--amber);
+    padding: 2px 8px; border-radius: 6px; font-size: 11px;
+  }
+
+  .warn {
+    border-left: 3px solid var(--coral); padding: 8px 12px;
+    background: rgba(214,69,69,.08); border-radius: 0 8px 8px 0;
+    font-size: 13px; margin-top: 10px;
+  }
+  .warn b { color: var(--coral); }
+
+  .error { color: var(--coral); font-weight: 700; }
+
+  details { margin-top: 14px; }
+  summary { color: var(--muted); font-size: 12px; cursor: pointer; }
+  pre {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    background: #0a1417; padding: 10px; border-radius: 8px;
+    overflow-x: auto; margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Etiqueta digitalizada</h1>
+<div class="sub">Procesado on-device · Gemma 4 · sin conexión</div>
+<div id="out"></div>
+
+<script>
+(function () {
+  const FALLBACK = {
+    producto: "Sodium Chloride, ACS reagent, ≥99.0%",
+    fabricante: "Sigma-Aldrich",
+    numero_catalogo: "S9888-500G",
+    lote: "SLCK3421",
+    cantidad: { valor: 500, unidad: "g" },
+    concentracion: null,
+    fecha_vencimiento: "2028-03-31",
+    temperatura_almacenamiento: "temperatura ambiente",
+    pictogramas_ghs: [],
+    cas: "7647-14-5",
+    confianza: "alta",
+    campos_ilegibles: []
+  };
+
+  // El host puede inyectar un objeto o un string JSON. Aceptamos ambos.
+  function load() {
+    let raw = window.SKILL_DATA;
+    if (raw == null) return FALLBACK;
+    if (typeof raw === "string") {
+      // El modelo a veces envuelve el JSON en fences. Los sacamos.
+      raw = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+      try { return JSON.parse(raw); } catch (e) { return { error: "json_invalido", crudo: raw }; }
+    }
+    return raw;
+  }
+
+  const esc = s => String(s).replace(/[&<>"]/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function field(k, v) {
+    const isNull = v === null || v === undefined || v === "";
+    return `<div class="field">
+      <div class="k">${esc(k)}</div>
+      <div class="v ${isNull ? "null" : ""}">${isNull ? "no legible" : esc(v)}</div>
+    </div>`;
+  }
+
+  function medida(m) {
+    if (!m || m.valor == null) return null;
+    return `${m.valor} ${m.unidad ?? ""}`.trim();
+  }
+
+  function render(d) {
+    if (d.error) {
+      return `<div class="card"><div class="error">Error: ${esc(d.error)}</div></div>`;
+    }
+    const conf = d.confianza || "media";
+    const ilegibles = Array.isArray(d.campos_ilegibles) ? d.campos_ilegibles : [];
+    const ghs = Array.isArray(d.pictogramas_ghs) ? d.pictogramas_ghs : [];
+
+    return `
+      <span class="badge ${esc(conf)}">confianza ${esc(conf)}</span>
+      <div class="card">
+        <div class="producto">${esc(d.producto ?? "—")}</div>
+        <div class="fabricante">${esc(d.fabricante ?? "fabricante no legible")}</div>
+        <div class="grid">
+          ${field("Catálogo", d.numero_catalogo)}
+          ${field("Lote", d.lote)}
+          ${field("Cantidad", medida(d.cantidad))}
+          ${field("Concentración", medida(d.concentracion))}
+          ${field("Vencimiento", d.fecha_vencimiento)}
+          ${field("Almacenamiento", d.temperatura_almacenamiento)}
+          ${field("CAS", d.cas)}
+        </div>
+        ${ghs.length ? `<div class="ghs">${ghs.map(g => `<span>${esc(g)}</span>`).join("")}</div>` : ""}
+        ${ilegibles.length ? `<div class="warn"><b>Revisar a mano:</b> ${ilegibles.map(esc).join(", ")}</div>` : ""}
+      </div>
+      <details>
+        <summary>Ver JSON crudo</summary>
+        <pre>${esc(JSON.stringify(d, null, 2))}</pre>
+      </details>`;
+  }
+
+  const data = load();
+  document.getElementById("out").innerHTML =
+    Array.isArray(data) ? data.map(render).join("") : render(data);
+})();
+</script>
+</body>
+</html>

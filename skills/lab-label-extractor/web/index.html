@@ -1,0 +1,480 @@
+<!--
+  lab-label-extractor — versión web (práctico del Encuentro 2, plan B del Gallery).
+
+  Corre Gemma 4 E2B/E4B EN EL BROWSER vía WebGPU con MediaPipe LLM Inference.
+  Todo es client-side: el modelo se carga desde un archivo local .litertlm,
+  la foto nunca sale de la máquina. El único acceso a red es el CDN que sirve
+  la librería JS (una vez; después queda en caché del browser).
+
+  Cómo correr:
+    Abrir este archivo en Chrome (doble clic alcanza; necesita WebGPU).
+    Si algo se queja de file://, servirlo:
+      cd skills/lab-label-extractor/web && python3 -m http.server 8000
+
+  El modelo se descarga UNA vez desde Hugging Face (litert-community),
+  variante "-Web.litertlm", y se selecciona acá con el botón de archivo.
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lab-label-extractor · Gemma 4 en el browser</title>
+<style>
+  :root {
+    --bg: #0e1a1f;
+    --card: #16282e;
+    --line: #2e4249;
+    --text: #f2f7f6;
+    --muted: #9fb3b8;
+    --teal: #02c39a;
+    --amber: #e8a33d;
+    --coral: #d64545;
+    --mono: ui-monospace, "SF Mono", "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px; line-height: 1.5;
+    max-width: 760px; margin-inline: auto;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px; margin-bottom: 12px;
+  }
+  .card h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--muted); margin: 0 0 10px;
+  }
+
+  button {
+    background: var(--teal); color: #06231c; border: 0;
+    padding: 9px 16px; border-radius: 8px; font-size: 14px;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  button:disabled { opacity: .35; cursor: not-allowed; }
+  button.ghost {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  .status { font-family: var(--mono); font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+  .status.ok   { color: var(--teal); }
+  .status.err  { color: var(--coral); }
+  .status.busy { color: var(--amber); }
+
+  .drop {
+    border: 2px dashed var(--line); border-radius: 12px;
+    padding: 22px; text-align: center; color: var(--muted);
+    cursor: pointer; transition: border-color .15s;
+  }
+  .drop.over, .drop:hover { border-color: var(--teal); }
+  .drop img { max-width: 100%; max-height: 260px; border-radius: 8px; display: block; margin: 0 auto 8px; }
+
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: .5px;
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+  .badge.alta  { background: rgba(2,195,154,.18);  color: var(--teal);  }
+  .badge.media { background: rgba(232,163,61,.18); color: var(--amber); }
+  .badge.baja  { background: rgba(214,69,69,.18);  color: var(--coral); }
+
+  .producto { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+  .fabricante { color: var(--muted); font-size: 13px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .field .k {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--muted); margin-bottom: 2px;
+  }
+  .field .v { font-family: var(--mono); font-size: 14px; }
+  .field .v.null { color: var(--coral); font-style: italic; }
+  .ghs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .ghs span {
+    border: 1px solid var(--amber); color: var(--amber);
+    padding: 2px 8px; border-radius: 6px; font-size: 11px;
+  }
+  .warn {
+    border-left: 3px solid var(--coral); padding: 8px 12px;
+    background: rgba(214,69,69,.08); border-radius: 0 8px 8px 0;
+    font-size: 13px; margin-top: 10px;
+  }
+  .warn b { color: var(--coral); }
+  .error { color: var(--coral); font-weight: 700; }
+
+  details { margin-top: 14px; }
+  summary { color: var(--muted); font-size: 12px; cursor: pointer; }
+  pre {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    background: #0a1417; padding: 10px; border-radius: 8px;
+    overflow-x: auto; margin-top: 8px; white-space: pre-wrap; word-break: break-word;
+  }
+  .stream { min-height: 20px; }
+  .metric { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 8px; }
+  a { color: var(--teal); }
+  .foot { color: var(--muted); font-size: 12px; margin-top: 20px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Extractor de etiquetas de laboratorio</h1>
+<div class="sub">Gemma 4 en el browser · WebGPU · la foto no sale de esta máquina</div>
+
+<!-- Paso 1: modelo -->
+<div class="card">
+  <h2>1 · Modelo</h2>
+  <div class="row">
+    <button id="btnModel">Elegir archivo .litertlm</button>
+    <button id="btnDemo" class="ghost">Modo ensayo (sin modelo)</button>
+    <input type="file" id="modelFile" accept=".litertlm,.task" hidden>
+  </div>
+  <div class="status" id="modelStatus">
+    Descargá una vez la variante <b>-web</b> de
+    <a href="https://huggingface.co/litert-community" target="_blank" rel="noopener">litert-community</a>
+    (<code>gemma-4-E2B-it-web.litertlm</code>, o E4B si la máquina da) y seleccionala acá.
+  </div>
+</div>
+
+<!-- Paso 2: etiqueta (foto o texto) -->
+<div class="card">
+  <h2>2 · Etiqueta</h2>
+  <div class="drop" id="drop">
+    <span id="dropHint">Arrastrá la foto de la etiqueta, o hacé clic para elegirla / sacarla con la cámara</span>
+  </div>
+  <input type="file" id="imgFile" accept="image/*" capture="environment" hidden>
+  <div class="status">
+    ⚠️ La variante web de Gemma 4 es <b>text-only por ahora</b> (según el model card
+    oficial). Mientras Google no publique visión para web, usá el modo texto:
+  </div>
+  <textarea id="labelText" rows="4" placeholder="Pegá acá el texto de la etiqueta (si hay texto, se usa en lugar de la foto)…"
+    style="width:100%;margin-top:8px;background:#0a1417;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font-family:var(--mono);font-size:13px;resize:vertical;"></textarea>
+</div>
+
+<!-- Paso 3: correr -->
+<div class="card">
+  <h2>3 · Digitalizar</h2>
+  <div class="row">
+    <button id="btnRun" disabled>Digitalizar etiqueta</button>
+    <span class="metric" id="metrics"></span>
+  </div>
+  <div class="status busy stream" id="runStatus"></div>
+</div>
+
+<div id="out"></div>
+
+<div class="foot">
+  Demo educativa — <b>no es un dispositivo médico</b> ni un sistema de inventario validado.<br>
+  Modelo y foto se procesan localmente vía WebGPU. Verificá siempre el JSON contra la etiqueta real.
+</div>
+
+<script type="module">
+// Mismo patrón que el sample oficial de mediapipe-samples/llm_inference/js.
+import { FilesetResolver, LlmInference } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai";
+
+/* ── El contenido de SKILL.md como system prompt ─────────────────────────
+   En el Gallery esto vive en el frontmatter + cuerpo de SKILL.md; acá se
+   inyecta directo en el turno del usuario. Mismo contrato, otro host.
+   (Sin fences de markdown: a los modelos chicos les pedimos JSON puro.)  */
+const SKILL_PROMPT = [
+  "Sos un extractor de etiquetas de laboratorio. Convertís la foto de una",
+  "etiqueta de un reactivo, frasco, vial o insumo de laboratorio en un registro",
+  "JSON limpio, listo para cargar en un inventario.",
+  "",
+  "Devolvé UNICAMENTE un objeto JSON. Sin preambulo, sin explicacion, sin",
+  "bloques de codigo markdown.",
+  "",
+  "Esquema de salida:",
+  '{',
+  '  "producto": "string",',
+  '  "fabricante": "string | null",',
+  '  "numero_catalogo": "string | null",',
+  '  "lote": "string | null",',
+  '  "cantidad": { "valor": number, "unidad": "string" } | null,',
+  '  "concentracion": { "valor": number, "unidad": "string" } | null,',
+  '  "fecha_vencimiento": "YYYY-MM-DD | null",',
+  '  "temperatura_almacenamiento": "string | null",',
+  '  "pictogramas_ghs": ["string"],',
+  '  "cas": "string | null",',
+  '  "confianza": "alta | media | baja",',
+  '  "campos_ilegibles": ["string"]',
+  '}',
+  "",
+  "Ejemplo. Entrada: foto de un frasco ambar cuya etiqueta dice",
+  "  Sigma-Aldrich / Sodium Chloride, ACS reagent, >=99.0% /",
+  "  S9888-500G  Lot# SLCK3421 / 500 g / CAS 7647-14-5 / Store at RT / Exp: 03/2028",
+  "Salida:",
+  '{ "producto": "Sodium Chloride, ACS reagent, >=99.0%", "fabricante": "Sigma-Aldrich",',
+  '  "numero_catalogo": "S9888-500G", "lote": "SLCK3421",',
+  '  "cantidad": { "valor": 500, "unidad": "g" }, "concentracion": null,',
+  '  "fecha_vencimiento": "2028-03-31", "temperatura_almacenamiento": "temperatura ambiente",',
+  '  "pictogramas_ghs": [], "cas": "7647-14-5", "confianza": "alta", "campos_ilegibles": [] }',
+  "",
+  "Reglas duras:",
+  "1. Nunca inventes un valor. Si un campo no esta en la etiqueta o no se puede",
+  "   leer, pone null y agrega el nombre del campo a campos_ilegibles. Un null",
+  "   explicito es un dato correcto; un valor inventado se propaga al inventario.",
+  "2. Fechas: siempre YYYY-MM-DD. Si solo hay mes y anio (03/2028), usa el",
+  "   ultimo dia del mes (2028-03-31). Si el formato es ambiguo entre dia/mes",
+  "   y mes/dia, pone null y anota fecha_vencimiento en campos_ilegibles.",
+  "3. Unidades: transcribi la unidad tal como aparece (g, mg, mL, L, U/mL, mM).",
+  "   No conviertas entre unidades.",
+  "4. cantidad es cuanto hay en el envase (500 g); concentracion es cuan fuerte",
+  "   es (1 M, 10 mg/mL). Un solido puro suele tener cantidad y no concentracion.",
+  "5. Pictogramas GHS: lista solo los que ves. Nombres validos: explosivo,",
+  "   inflamable, comburente, gas_a_presion, corrosivo, toxico_agudo, irritante,",
+  "   peligro_salud, peligro_ambiental.",
+  "6. confianza: alta = etiqueta enfocada, completa y legible; media = reflejos,",
+  "   angulo o desenfoque parcial pero los campos principales se leen;",
+  "   baja = la mitad o mas no se lee. Si es baja, decilo: no devuelvas un JSON optimista.",
+  "7. Idioma: el contenido de la etiqueta se transcribe tal cual (Sodium Chloride",
+  "   no se traduce). Los valores de enumeracion van en espaniol.",
+  "",
+  "Casos borde:",
+  "- Multiples etiquetas en una foto: devolve un array JSON de objetos.",
+  '- La foto no es una etiqueta de laboratorio: devolve {"error": "no_es_etiqueta_de_laboratorio"}.',
+  "- Idioma que no reconoces: transcribi igual lo que ves y baja la confianza.",
+  "- Codigo de barras o QR: ignoralo, no intentes decodificarlo.",
+].join("\n");
+
+/* ── Estado ── */
+let llm = null;          // instancia LlmInference
+let imgCanvas = null;    // canvas con la foto (reducida)
+let demoMode = false;
+
+const $ = id => document.getElementById(id);
+const modelStatus = $("modelStatus"), runStatus = $("runStatus");
+
+function setStatus(el, msg, cls) {
+  el.textContent = msg;
+  el.className = "status " + (cls || "");
+}
+function refreshRunButton() {
+  const hayEtiqueta = imgCanvas || $("labelText").value.trim();
+  $("btnRun").disabled = !((llm || demoMode) && hayEtiqueta);
+}
+
+/* ── WebGPU check ── */
+if (!navigator.gpu) {
+  setStatus(modelStatus,
+    "Este browser no tiene WebGPU. Usá Chrome/Edge actualizado. " +
+    "El modo ensayo funciona igual.", "err");
+}
+
+/* ── Paso 1: cargar modelo desde archivo local ── */
+$("btnModel").onclick = () => $("modelFile").click();
+
+$("modelFile").onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  demoMode = false;
+  const gb = (file.size / 1e9).toFixed(2);
+  setStatus(modelStatus, `Cargando ${file.name} (${gb} GB) en la GPU… puede tardar un par de minutos la primera vez.`, "busy");
+  $("btnModel").disabled = true;
+  try {
+    const genai = await FilesetResolver.forGenAiTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai/wasm");
+    llm = await LlmInference.createFromOptions(genai, {
+      baseOptions: { modelAssetBuffer: file.stream().getReader() },
+      maxTokens: 2560,
+      topK: 40,
+      temperature: 0.2,   // extracción, no creatividad
+      maxNumImages: 1,
+    });
+    setStatus(modelStatus, `Modelo listo: ${file.name} · WebGPU`, "ok");
+  } catch (err) {
+    llm = null;
+    setStatus(modelStatus, "No se pudo cargar el modelo: " + err.message, "err");
+    console.error(err);
+  }
+  $("btnModel").disabled = false;
+  refreshRunButton();
+};
+
+/* Modo ensayo: renderiza el dato de ejemplo sin modelo, para practicar el guion. */
+$("btnDemo").onclick = () => {
+  demoMode = true;
+  llm = null;
+  setStatus(modelStatus, "Modo ensayo: sin modelo, se muestra el resultado de ejemplo.", "ok");
+  refreshRunButton();
+};
+
+/* ── Paso 2: foto (click / cámara / drag & drop) ── */
+const drop = $("drop");
+drop.onclick = () => $("imgFile").click();
+$("imgFile").onchange = e => e.target.files[0] && loadImage(e.target.files[0]);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => {
+  e.preventDefault(); drop.classList.remove("over");
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith("image/")) loadImage(f);
+};
+$("labelText").oninput = refreshRunButton;
+
+function loadImage(file) {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    // Reducimos a 768 px de lado mayor: menos tokens de prefill, misma legibilidad.
+    const scale = Math.min(1, 768 / Math.max(img.width, img.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * scale);
+    c.height = Math.round(img.height * scale);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    imgCanvas = c;
+    drop.innerHTML = "";
+    const preview = new Image();
+    preview.src = c.toDataURL("image/jpeg", 0.9);
+    drop.appendChild(preview);
+    const hint = document.createElement("span");
+    hint.textContent = `${file.name} · ${c.width}×${c.height} (clic para cambiar)`;
+    drop.appendChild(hint);
+    URL.revokeObjectURL(url);
+    refreshRunButton();
+  };
+  img.src = url;
+}
+
+/* ── Paso 3: inferencia ── */
+$("btnRun").onclick = async () => {
+  $("btnRun").disabled = true;
+  $("out").innerHTML = "";
+  $("metrics").textContent = "";
+
+  if (demoMode) {
+    renderResult(JSON.stringify(FALLBACK));
+    setStatus(runStatus, "Resultado de ejemplo (modo ensayo).", "ok");
+    $("btnRun").disabled = false;
+    return;
+  }
+
+  setStatus(runStatus, "Procesando la imagen (prefill)…", "busy");
+  const t0 = performance.now();
+  let tFirst = null;
+  let acc = "";
+
+  // Si hay texto pegado se usa texto (la variante web de Gemma 4 es text-only
+  // por ahora); la rama con imagen queda lista para cuando Google publique visión web.
+  const textoEtiqueta = $("labelText").value.trim();
+  const promptPartes = textoEtiqueta
+    ? ["<start_of_turn>user\n",
+       SKILL_PROMPT + "\n\nDigitaliza esta etiqueta (texto transcripto):\n" + textoEtiqueta,
+       "<end_of_turn>\n<start_of_turn>model\n"]
+    : ["<start_of_turn>user\n",
+       SKILL_PROMPT + "\n\nDigitaliza esta etiqueta:\n",
+       { imageSource: imgCanvas },
+       "<end_of_turn>\n<start_of_turn>model\n"];
+
+  try {
+    await llm.generateResponse(
+      promptPartes,
+      (partial, done) => {
+        if (tFirst === null && partial) tFirst = performance.now();
+        acc += partial;
+        setStatus(runStatus, acc, "busy");
+        if (done) {
+          const t1 = performance.now();
+          $("metrics").textContent =
+            `primer token ${((tFirst - t0) / 1000).toFixed(1)} s · total ${((t1 - t0) / 1000).toFixed(1)} s`;
+          setStatus(runStatus, "Listo.", "ok");
+          renderResult(acc);
+          $("btnRun").disabled = false;
+        }
+      }
+    );
+  } catch (err) {
+    const msg = /VisionInference|Image models/.test(err.message)
+      ? "Este modelo web de Gemma 4 es text-only (la visión web todavía no fue publicada). Pegá el texto de la etiqueta en el paso 2 y volvé a correr."
+      : "Error de inferencia: " + err.message;
+    setStatus(runStatus, msg, "err");
+    console.error(err);
+    $("btnRun").disabled = false;
+  }
+};
+
+/* ── Renderer: el mismo de scripts/index.html, con el JSON del modelo ── */
+const FALLBACK = {
+  producto: "Sodium Chloride, ACS reagent, ≥99.0%",
+  fabricante: "Sigma-Aldrich",
+  numero_catalogo: "S9888-500G",
+  lote: "SLCK3421",
+  cantidad: { valor: 500, unidad: "g" },
+  concentracion: null,
+  fecha_vencimiento: "2028-03-31",
+  temperatura_almacenamiento: "temperatura ambiente",
+  pictogramas_ghs: [],
+  cas: "7647-14-5",
+  confianza: "alta",
+  campos_ilegibles: []
+};
+
+function parseModelJson(raw) {
+  // El modelo a veces envuelve el JSON en fences o agrega texto alrededor.
+  let s = raw.replace(/^```(?:json)?/im, "").replace(/```\s*$/m, "").trim();
+  const start = s.search(/[{\[]/);
+  if (start > 0) s = s.slice(start);
+  const end = Math.max(s.lastIndexOf("}"), s.lastIndexOf("]"));
+  if (end >= 0) s = s.slice(0, end + 1);
+  try { return JSON.parse(s); } catch (e) { return { error: "json_invalido", crudo: raw }; }
+}
+
+const esc = s => String(s).replace(/[&<>"]/g, c =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function field(k, v) {
+  const isNull = v === null || v === undefined || v === "";
+  return `<div class="field">
+    <div class="k">${esc(k)}</div>
+    <div class="v ${isNull ? "null" : ""}">${isNull ? "no legible" : esc(v)}</div>
+  </div>`;
+}
+
+function medida(m) {
+  if (!m || m.valor == null) return null;
+  return `${m.valor} ${m.unidad ?? ""}`.trim();
+}
+
+function renderOne(d) {
+  if (d.error) {
+    const crudo = d.crudo ? `<details><summary>Salida cruda del modelo</summary><pre>${esc(d.crudo)}</pre></details>` : "";
+    return `<div class="card"><div class="error">Error: ${esc(d.error)}</div>${crudo}</div>`;
+  }
+  const conf = d.confianza || "media";
+  const ilegibles = Array.isArray(d.campos_ilegibles) ? d.campos_ilegibles : [];
+  const ghs = Array.isArray(d.pictogramas_ghs) ? d.pictogramas_ghs : [];
+  return `
+    <span class="badge ${esc(conf)}">confianza ${esc(conf)}</span>
+    <div class="card">
+      <div class="producto">${esc(d.producto ?? "—")}</div>
+      <div class="fabricante">${esc(d.fabricante ?? "fabricante no legible")}</div>
+      <div class="grid">
+        ${field("Catálogo", d.numero_catalogo)}
+        ${field("Lote", d.lote)}
+        ${field("Cantidad", medida(d.cantidad))}
+        ${field("Concentración", medida(d.concentracion))}
+        ${field("Vencimiento", d.fecha_vencimiento)}
+        ${field("Almacenamiento", d.temperatura_almacenamiento)}
+        ${field("CAS", d.cas)}
+      </div>
+      ${ghs.length ? `<div class="ghs">${ghs.map(g => `<span>${esc(g)}</span>`).join("")}</div>` : ""}
+      ${ilegibles.length ? `<div class="warn"><b>Revisar a mano:</b> ${ilegibles.map(esc).join(", ")}</div>` : ""}
+    </div>
+    <details>
+      <summary>Ver JSON crudo</summary>
+      <pre>${esc(JSON.stringify(d, null, 2))}</pre>
+    </details>`;
+}
+
+function renderResult(raw) {
+  const data = typeof raw === "string" ? parseModelJson(raw) : raw;
+  $("out").innerHTML = Array.isArray(data) ? data.map(renderOne).join("") : renderOne(data);
+}
+</script>
+</body>
+</html>

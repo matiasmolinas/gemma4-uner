@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gemma 4 × UNER — Encuentros preparatorios</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<style>
+  :root {
+    --bg: #0b1c33;        /* azul del flyer */
+    --panel: #12294a;
+    --line: #23406b;
+    --text: #eef3fa;
+    --muted: #9db4d4;
+    --accent: #4da3ff;
+    --gold: #ffc24d;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; flex-direction: column;
+  }
+  #stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden; }
+  .slide {
+    width: min(960px, 94vw); max-height: 88vh; overflow-y: auto;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    padding: 40px 48px; line-height: 1.55; font-size: clamp(14px, 1.6vw, 18px);
+    box-shadow: 0 10px 40px rgba(0,0,0,.45);
+  }
+  .slide h1 { font-size: 2em; margin: 0 0 .3em; color: #fff; }
+  .slide h2 { font-size: 1.5em; margin: 0 0 .5em; color: var(--accent); }
+  .slide h3 { font-size: 1.1em; color: var(--gold); }
+  .slide em { color: var(--muted); }
+  .slide strong { color: #fff; }
+  .slide a { color: var(--accent); }
+  .slide code {
+    font-family: ui-monospace, "SF Mono", monospace; font-size: .9em;
+    background: #0a1626; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px;
+  }
+  .slide table { border-collapse: collapse; margin: .8em 0; width: 100%; }
+  .slide th, .slide td { border: 1px solid var(--line); padding: 6px 12px; text-align: left; }
+  .slide th { background: #0e2140; color: var(--gold); }
+  .slide li { margin: .3em 0; }
+  .slide blockquote {
+    display: none; /* notas del orador, toggle con N */
+    margin: 1.2em 0 0; padding: 12px 16px; border-left: 4px solid var(--gold);
+    background: rgba(255,194,77,.07); border-radius: 0 10px 10px 0;
+    color: var(--muted); font-size: .85em;
+  }
+  body.show-notes .slide blockquote { display: block; }
+  #bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 13px; user-select: none;
+  }
+  #bar .hint { opacity: .75; }
+  #bar button {
+    background: transparent; color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 14px; margin-left: 8px; cursor: pointer; font-size: 13px;
+  }
+  #bar button:hover { border-color: var(--accent); }
+  #progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--accent); transition: width .2s; }
+  @media print {
+    #bar, #progress { display: none; }
+    #stage { display: block; overflow: visible; }
+    .slide { display: block !important; max-height: none; page-break-after: always; margin-bottom: 20px; }
+    body.show-notes .slide blockquote { display: block; }
+  }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="stage"><div class="slide">Cargando presentación…</div></div>
+<div id="bar">
+  <span id="counter">–</span>
+  <span class="hint">← → navegar · N notas del orador · <a href="presentacion.md" style="color:var(--accent)">markdown</a></span>
+  <span>
+    <button id="prev">←</button>
+    <button id="next">→</button>
+    <button id="notes">Notas</button>
+  </span>
+</div>
+
+<script>
+let slides = [], idx = 0;
+
+async function init() {
+  let md;
+  try {
+    md = await (await fetch("presentacion.md")).text();
+  } catch (e) {
+    document.querySelector(".slide").innerHTML =
+      "No pude cargar <code>presentacion.md</code>. Si abriste el archivo localmente, serví la carpeta con <code>python3 -m http.server</code>.";
+    return;
+  }
+  slides = md.split(/\n---\n/).map(s => marked.parse(s.trim()));
+  idx = Math.min(slides.length - 1, Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1));
+  render();
+}
+
+function render() {
+  const stage = document.getElementById("stage");
+  stage.innerHTML = "";
+  const div = document.createElement("div");
+  div.className = "slide";
+  div.innerHTML = slides[idx];
+  stage.appendChild(div);
+  document.getElementById("counter").textContent = `${idx + 1} / ${slides.length}`;
+  document.getElementById("progress").style.width = ((idx + 1) / slides.length * 100) + "%";
+  history.replaceState(null, "", "#" + (idx + 1));
+}
+
+function go(d) { idx = Math.min(slides.length - 1, Math.max(0, idx + d)); render(); }
+
+document.getElementById("prev").onclick = () => go(-1);
+document.getElementById("next").onclick = () => go(1);
+document.getElementById("notes").onclick = () => document.body.classList.toggle("show-notes");
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") go(1);
+  else if (e.key === "ArrowLeft" || e.key === "PageUp") go(-1);
+  else if (e.key.toLowerCase() === "n") document.body.classList.toggle("show-notes");
+});
+init();
+</script>
+</body>
+</html>
